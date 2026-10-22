@@ -1,9 +1,9 @@
 # 🏛️ Council Watchdog
 
-Automated municipal council agenda monitoring for **Better North Shore**.
+Automated municipal council agenda monitoring for my municipal advocacy organization in BC.  (www.BetterNorthShore.ca)
 
-The watchdog tracks regular council meetings on the North Shore, downloads the
-agenda package, scans it for housing, transportation and climate items, and
+The watchdog tracks regular council meetings at the three municipalities we watch and aim to contribute to.
+It downloads the agenda package, scans it for housing, transportation and climate items, (our 3 priorities) and
 produces a briefing digest — so the BNS team can see at a glance what council
 is about to decide.
 
@@ -30,7 +30,7 @@ The command prints a briefing digest like:
 ```
 🏛️ Council Watchdog: DNV — Regular Meeting October 5, 2026
 
-Automated BNS Civic Vigilance Briefing
+Automated BNS Municipal Digest Briefing
 Municipality: DNV
 Meeting: Regular Meeting October 5, 2026
 Source: https://simplicity-api.dnv.org/...
@@ -46,7 +46,7 @@ Source: https://simplicity-api.dnv.org/...
 2. Download the latest agenda package PDF (with health checks — a failed
    downstream API is reported as such, never as a false "no meeting").
 3. Extract text and scan for topic keywords.
-4. Build the digest and optionally deliver it (Discord webhook / email).
+4. Build the digest and optionally deliver it - to a Discord chat-server (webhook) and email 
 
 ## Configuration (all environment variables)
 
