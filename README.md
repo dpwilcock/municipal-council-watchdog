@@ -47,7 +47,34 @@ Source: https://simplicity-api.dnv.org/...
 2. Download the latest agenda package PDF (with health checks — a failed
    downstream API is reported as such, never as a false "no meeting").
 3. Extract text and scan for topic keywords.
-4. Build the digest and optionally deliver it - to a Discord chat-server (webhook) and email 
+4. Build the digest and optionally deliver it - to a Discord chat-server (webhook) and email
+
+## Add your municipality
+
+This project is designed to be forked and adapted. Every municipality exposes
+its council agenda differently, so each one gets its own scraper — that's the
+pattern:
+
+1. **Create `src/scrapers/<code>.js`** exporting a `fetchLatestAgenda({ date,
+   config })` that returns `{ municipality, meetingTitle, meetingDate,
+   sourceUrl, pdfPath, text }`.
+2. **Register it** in `src/scrapers/index.js` under its municipality code
+   (e.g. `SURREY: surrey`).
+3. **Reuse the shared PDF helpers** (`src/scrapers/common.js`): download +
+   text-extract in one call, with redirect handling and timeouts built in.
+4. **Test it**: `npm test`, plus a live run against your municipality's site
+   (`node src/index.js --municipality=YOURCODE`).
+5. **Add your row** to the Supported municipalities table and open a pull
+   request.
+
+Two rules from the BNS maintainership: **no secrets in the repo** (all
+config via `COUNCIL_WATCHDOG_*` env vars) and **never silently report "no
+meeting"** when your source has actually failed — a dead scraper should fail
+loudly so humans notice.
+
+Looking for inspiration? See what other municipalities are doing in
+[existing PRs](https://github.com/dpwilcock/municipal-council-watchdog/pulls)
+and [issues](https://github.com/dpwilcock/municipal-council-watchdog/issues).
 
 ## Configuration (all environment variables)
 
