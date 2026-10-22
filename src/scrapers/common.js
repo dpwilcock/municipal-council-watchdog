@@ -1,5 +1,7 @@
 /**
  * Shared PDF helpers: download a PDF from a URL and extract its text.
+ * Downloads happen in-process (no shell), so URLs are never interpreted by a
+ * shell — safe even for untrusted/website-supplied links.
  */
 
 const fs = require('fs');
@@ -7,13 +9,16 @@ const https = require('https');
 const http = require('http');
 const pdfParse = require('pdf-parse');
 
-function httpGet(url, timeoutMs = 30000) {
+function httpGet(url, timeoutMs = 30000, cookieHeader = null) {
   return new Promise((resolve, reject) => {
     const lib = url.startsWith('https') ? https : http;
-    const req = lib.get(url, { timeout: timeoutMs }, (res) => {
+    const headers = {};
+    if (cookieHeader) headers.Cookie = cookieHeader;
+
+    const req = lib.get(url, { timeout: timeoutMs, headers }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         res.resume();
-        return resolve(httpGet(res.headers.location, timeoutMs));
+        return resolve(httpGet(res.headers.location, timeoutMs, cookieHeader));
       }
       if (res.statusCode !== 200) {
         res.resume();
@@ -26,8 +31,8 @@ function httpGet(url, timeoutMs = 30000) {
   });
 }
 
-async function downloadFile(url, dest, timeoutMs = 30000) {
-  const response = await httpGet(url, timeoutMs);
+async function downloadFile(url, dest, timeoutMs = 30000, cookieHeader = null) {
+  const response = await httpGet(url, timeoutMs, cookieHeader);
   await new Promise((resolve, reject) => {
     const file = fs.createWriteStream(dest);
     response.pipe(file);
@@ -38,11 +43,11 @@ async function downloadFile(url, dest, timeoutMs = 30000) {
   return dest;
 }
 
-async function downloadAndExtractText(url, dest) {
-  await downloadFile(url, dest);
+async function downloadAndExtractText(url, dest, timeoutMs = 30000, cookieHeader = null) {
+  await downloadFile(url, dest, timeoutMs, cookieHeader);
   const dataBuffer = fs.readFileSync(dest);
   const data = await pdfParse(dataBuffer);
   return data.text;
 }
 
-module.exports = { downloadFile, downloadAndExtractText, httpGet };
+module.exports = { httpGet, downloadFile, downloadAndExtractText };

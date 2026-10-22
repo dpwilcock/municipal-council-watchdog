@@ -3,13 +3,15 @@
  *
  * DWV's site sits behind Cloudflare; we use puppeteer-extra with the stealth
  * plugin to load the upcoming regular council meeting page, find the agenda
- * PDF link, and download it reusing the page's session.
+ * PDF link, and download it reusing the page's session. The PDF is downloaded
+ * in-process with Node's http(s) — never piped through a shell — so a
+ * malformed link cannot become a command-injection vector.
  */
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 const { downloadAndExtractText } = require('./common');
+const { parseLocalDate, ymd } = require('../dates');
 
 function nextMonday(from = new Date()) {
   const d = new Date(from);
@@ -20,10 +22,10 @@ function nextMonday(from = new Date()) {
 }
 
 async function fetchLatestAgenda({ date, config } = {}) {
-  const targetDate = date ? new Date(date) : nextMonday();
+  const targetDate = parseLocalDate(date || nextMonday());
   const yy = targetDate.getFullYear().toString().slice(-2);
   const mmm = targetDate.toLocaleString('en-US', { month: 'short' }).toLowerCase();
-  const dd = targetDate.getDate().toString().padStart(2, '0');
+  const dd = String(targetDate.getDate()).padStart(2, '0');
   const urlSuffix = `${yy}${mmm}${dd}`;
   const meetingUrl = `https://westvancouver.ca/mayor-council/regular-council-meeting/${urlSuffix}`;
 
@@ -34,7 +36,7 @@ async function fetchLatestAgenda({ date, config } = {}) {
 
   const outDir = config?.dataDir || path.join(process.cwd(), 'data', 'council-minutes');
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
-  const outPath = path.join(outDir, `DWV_${targetDate.toISOString().split('T')[0]}_Agenda.pdf`);
+  const outPath = path.join(outDir, `DWV_${ymd(targetDate)}_Agenda.pdf`);
 
   const browser = await puppeteer.launch({ headless: true });
   try {
@@ -54,19 +56,17 @@ async function fetchLatestAgenda({ date, config } = {}) {
       throw new Error('NO_FUTURE_MEETING_SCHEDULED: meeting page has no PDF agenda link.');
     }
 
-    // Download with the page's session to get past Cloudflare
+    // Download with the page's session to get past Cloudflare. Using the
+    // session cookie avoids re-triggering the challenge.
     const cookies = await page.cookies();
-    const cookieStr = cookies.map((c) => `${c.name}=${c.value}`).join('; ');
-    const ua = await browser.userAgent();
-    execSync(`curl -sL -A "${ua}" -b "${cookieStr}" -o "${outPath}" "${agendaLink}"`);
+    const cookieHeader = cookies.map((c) => `${c.name}=${c.value}`).join('; ');
 
-    const text = fs.existsSync(outPath) ? await require('pdf-parse')(fs.readFileSync(outPath)).then((d) => d.text) : '';
-    if (!text) throw new Error('Failed to extract text from DWV agenda PDF.');
+    const text = await downloadAndExtractText(agendaLink, outPath, 30000, cookieHeader);
 
     return {
       municipality: 'DWV',
       meetingTitle: 'Regular Council Meeting',
-      meetingDate: targetDate.toISOString().split('T')[0],
+      meetingDate: ymd(targetDate),
       sourceUrl: agendaLink,
       pdfPath: outPath,
       text,

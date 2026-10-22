@@ -1,20 +1,21 @@
 {
-  "name": "council-watchdog",
+  "name": "municipal-council-watchdog",
   "version": "1.0.0",
   "description": "Municipal council agenda watchdog for Better North Shore — tracks District of North Vancouver, City of North Vancouver and West Vancouver council meetings, and flags housing / transportation / climate items.",
   "type": "commonjs",
   "main": "src/index.js",
   "bin": {
-    "council-watchdog": "src/index.js"
+    "municipal-council-watchdog": "src/index.js"
   },
   "scripts": {
     "start": "node src/index.js",
-    "test": "node --test tests/"
+    "test": "node --test"
   },
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
+    "nodemailer": "^6.9.16",
     "pdf-parse": "^1.1.1",
     "puppeteer": "^23.11.1",
     "puppeteer-extra": "^3.3.6",

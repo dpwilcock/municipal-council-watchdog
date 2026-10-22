@@ -9,7 +9,8 @@
 
 const fs = require('fs');
 const path = require('path');
-const { httpGet, downloadFile, downloadAndExtractText } = require('./common');
+const { downloadAndExtractText } = require('./common');
+const { parseLocalDate, ymd } = require('../dates');
 
 const API_BASE = 'https://simplicity-api.dnv.org';
 const SEARCH_URL =
@@ -20,16 +21,14 @@ const SEARCH_URL =
   `&model_filters[0][category][]=Public%20meeting&model_filters[0][category][]=Closed%20special%20meeting` +
   `&include[0]=meeting&include[1]=model&page=1&pageSize=20&sort=start_at&sortdir=asc`;
 
-function formatDateStr(date) {
-  return date.toISOString().split('T')[0];
+function formatUtc(d) {
+  return d.toISOString().split('T')[0];
 }
 
 async function getJson(url) {
-  const resp = await httpGet(url);
-  let body = '';
-  for await (const chunk of resp) body += chunk;
-  if (resp.statusCode >= 400) throw new Error(`HTTP ${resp.statusCode} from ${url}`);
-  return JSON.parse(body);
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`HTTP ${resp.status} from ${url}`);
+  return resp.json();
 }
 
 async function apiHealthCheck() {
@@ -42,8 +41,8 @@ async function apiHealthCheck() {
 }
 
 async function pastMeetingsExist() {
-  const to = formatDateStr(new Date());
-  const from = formatDateStr(new Date(Date.now() - 90 * 86400000));
+  const to = formatUtc(new Date());
+  const from = formatUtc(new Date(Date.now() - 90 * 86400000));
   try {
     const result = await getJson(
       `${API_BASE}/public/event/search/advanced?from=${from}&to=${to}` +
@@ -61,8 +60,8 @@ async function fetchLatestAgenda({ date, config } = {}) {
     throw new Error('API_UNREACHABLE: Simplicity API health check failed.');
   }
 
-  const fromDate = date || formatDateStr(new Date());
-  const toDate = formatDateStr(new Date(Date.now() + 60 * 86400000));
+  const fromDate = ymd(parseLocalDate(date || new Date()));
+  const toDate = formatUtc(new Date(Date.now() + 60 * 86400000));
   const searchUrl = SEARCH_URL.replace('FROM', fromDate).replace('TO', toDate);
 
   let searchResult;
@@ -91,10 +90,8 @@ async function fetchLatestAgenda({ date, config } = {}) {
 
     for (const docId of docIds) {
       try {
-        const resp = await httpGet(`${API_BASE}/public/media/documents/${docId}`);
-        let body = '';
-        for await (const chunk of resp) body += chunk;
-        const doc = JSON.parse(body);
+        const resp = await fetch(`${API_BASE}/public/media/documents/${docId}`);
+        const doc = await resp.json();
         if (doc.data?.council_doc_type === 'agenda-with-reports') {
           targetMeeting = meeting;
           agendaDoc = doc;

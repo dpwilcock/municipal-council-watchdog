@@ -1,4 +1,4 @@
-# 🏛️ Council Watchdog
+# 🏛️ Municipal Council Watchdog
 
 Automated municipal council agenda monitoring for my municipal advocacy organization in BC.  (www.BetterNorthShore.ca)
 
@@ -28,11 +28,12 @@ and `--notify` to enable delivery (see below).
 The command prints a briefing digest like:
 
 ```
-🏛️ Council Watchdog: DNV — Regular Meeting October 5, 2026
+🏛️ Council Watchdog: DNV — Regular Meeting
 
 Automated BNS Municipal Digest Briefing
 Municipality: DNV
-Meeting: Regular Meeting October 5, 2026
+Meeting: Regular Meeting
+Meeting Date: 05-Oct-2026
 Source: https://simplicity-api.dnv.org/...
 
 ### 🟡 Items of Interest (Housing & Transportation)

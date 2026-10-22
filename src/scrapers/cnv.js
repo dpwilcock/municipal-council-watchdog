@@ -9,6 +9,7 @@
 const fs = require('fs');
 const path = require('path');
 const { httpGet, downloadAndExtractText } = require('./common');
+const { parseLocalDate, ymd } = require('../dates');
 
 function nextMonday(from = new Date()) {
   const d = new Date(from);
@@ -47,7 +48,7 @@ async function exists(url) {
 }
 
 async function fetchLatestAgenda({ date, config } = {}) {
-  const targetDate = date ? new Date(date) : nextMonday();
+  const targetDate = parseLocalDate(date || nextMonday());
   const attempts = [
     { label: 'upcoming', d: targetDate },
     { label: 'previous', d: previousMonday(new Date()) },
@@ -57,7 +58,7 @@ async function fetchLatestAgenda({ date, config } = {}) {
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 
   for (const { label, d } of attempts) {
-    if (d.getDay() !== 1 && label === 'upcoming') continue;
+    if (label === 'upcoming' && d.getDay() !== 1) continue;
     const year = d.getFullYear();
     const base = `https://www.cnv.org/-/media/City-of-North-Vancouver/Documents/Council-Meeting-Agenda/${year}/`;
 
@@ -65,7 +66,7 @@ async function fetchLatestAgenda({ date, config } = {}) {
       const url = base + filename;
       try {
         if (!(await exists(url))) continue;
-        const dateStr = d.toISOString().split('T')[0];
+        const dateStr = ymd(d);
         const outPath = path.join(outDir, `CNV_${dateStr}_Agenda.pdf`);
         const text = await downloadAndExtractText(url, outPath);
         return {

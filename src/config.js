@@ -29,10 +29,9 @@ function csv(key, fallback) {
 
 function configure(overrides = {}) {
   const dataDir =
+    overrides.dataDir ||
     process.env.COUNCIL_WATCHDOG_DATA_DIR ||
     path.join(process.cwd(), 'data', 'council-minutes');
-
-  if (overrides.dataDir) return { ...overrides };
 
   const delivery = {
     discordWebhookUrl: process.env.COUNCIL_WATCHDOG_DISCORD_WEBHOOK_URL || null,
