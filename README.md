@@ -13,7 +13,7 @@ is about to decide.
 |------|--------------|--------|
 | `DNV` | District of North Vancouver | Simplicity public API (simplicity-api.dnv.org) |
 | `CNV` | City of North Vancouver | Published agenda PDF URL pattern |
-| `DWV` | West Vancouver | Council meeting page (Cloudflare-protected, headless browser) |
+| `DWV` | West Vancouver | Council meeting page (headless browser) |
 
 ## Quick start
 

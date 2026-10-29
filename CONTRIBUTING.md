@@ -61,7 +61,7 @@ src/
   scrapers/
     dnv.js        District of North Vancouver (Simplicity API)
     cnv.js        City of North Vancouver (PDF URL pattern)
-    dwv.js        West Vancouver (headless browser, Cloudflare)
+    dwv.js        West Vancouver (headless browser)
 tests/            node:test unit tests
 ```
 
